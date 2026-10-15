@@ -169,7 +169,7 @@ struct ContentView: View {
             Button("暂不", role: .cancel) { showcase.asked() }
         } message: {
             let n = showcase.updates.count
-            Text("有 \(n) 个 app\(n == 1 ? "" : "s") 的元数据已更新。要下载这些更新吗？")
+            Text("已更新 \(n) 个应用的元数据。要下载这些更新吗？")
         }
         // An APK shared to Husk: where does it go?
         .sheet(isPresented: Binding(get: { !incoming.waiting.isEmpty },

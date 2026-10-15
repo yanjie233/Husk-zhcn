@@ -317,7 +317,7 @@ struct GamePage: View {
             await MainActor.run {
                 savesBusy = false
                 switch result {
-                case .success(let n): savesMessage = "已从 \(url.lastPathComponent) 恢复 \(n) 个文件\(n == 1 ? "" : "s")。"
+                case .success(let n): savesMessage = "已从 \(url.lastPathComponent) 恢复 \(n) 个文件。"
                 case .failure(let e): savesMessage = e.localizedDescription
                 }
             }

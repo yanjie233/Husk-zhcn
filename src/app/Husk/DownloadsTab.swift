@@ -87,7 +87,7 @@ private struct DownloadRow: View {
     private var fraction: Double { job.total > 0 ? min(1, Double(job.received) / Double(job.total)) : 0 }
 
     private var status: String {
-        if job.complete { return job.kind == .apk ? "已加入游戏库" : job.kind == .folder ? "已存入共享存储" : "已存入共享存储" }
+        if job.complete { return job.kind == .apk ? "已加入资料库" : job.kind == .folder ? "已存入共享存储" : "已存入共享存储" }
         if job.paused { return "已暂停 · \(Downloads.bytes(job.received)) / \(Downloads.bytes(job.total))" }
         if let err = job.files.first(where: { $0.error != nil })?.error { return "已停止：\(err)" }
         var s = "\(Downloads.bytes(job.received)) / \(Downloads.bytes(job.total))"
@@ -144,7 +144,7 @@ private struct AddDownloadSheet: View {
                     if let problem = downloads.problem { Text(problem).foregroundStyle(.orange) }
                 }
                 Section {
-                    Text("APK 下载完成后会自动加入游戏库。其他文件会进入共享存储文件夹，游戏把它当作手机存储。")
+                    Text("APK 下载完成后会自动加入资料库。其他文件会进入共享存储文件夹，游戏把它当作手机存储。")
                     Text("要把同一 Wi-Fi 上电脑的整个文件夹传过来，在它上面运行下面的命令，再输入显示的地址：")
                     Text("python3 serve-folder.py <folder>")
                         .font(.system(.footnote, design: .monospaced))

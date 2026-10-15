@@ -67,7 +67,7 @@ struct TLTechnicalView: View {
                     row((apk as NSString).lastPathComponent, size(of: apk), mono: true)
                 }
                 if let r = report {
-                    row("Java 代码", r.dexCount == 0 ? "无" : "\(r.dexCount) 个 DEX 文件\(r.dexCount == 1 ? "" : "s")，\(bytes(r.dexBytes))")
+                    row("Java 代码", r.dexCount == 0 ? "无" : "\(r.dexCount) 个 DEX 文件，\(bytes(r.dexBytes))")
                     row("使用的 Android 库", "\(r.systemLibraries.count)")
                 }
                 row("存档数据", dataSize)

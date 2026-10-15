@@ -1,117 +1,117 @@
-name: Game or app doesn't work
-description: An Android game or app crashes, won't start, looks wrong, has no sound, or doesn't respond to controls in Husk.
-title: "[Game] "
+name: 游戏或应用无法运行
+description: Android 游戏或应用闪退、无法启动、显示异常、没有声音，或在 Husk 中操控无响应。
+title: "[游戏] "
 labels: ["bug", "compatibility"]
 body:
   - type: markdown
     attributes:
       value: |
-        This form is for a **game or app running in Husk**. If Husk itself is the problem, use the "Problem with Husk itself" form.
+        本表单用于反馈**在 Husk 中运行的游戏或应用**。如果是 Husk 本身的问题，请改用「Husk 本身的问题」表单。
 
-        Issues without logs or the details below will be closed. **Logs are how games get fixed.**
+        缺少日志或下列细节的 issue 会被关闭。**日志是解决游戏问题的关键。**
   - type: dropdown
     id: method
     attributes:
-      label: How are you running it?
+      label: 你是如何运行它的？
       description: |
-        **Translation Layer (native):** added to Husk's library and started from its page, without Android booting.
-        **Android (emulated):** installed inside the Android system Husk boots.
+        **转译层（原生）：** 添加到 Husk 的资料库并从它的页面启动，无需启动 Android。
+        **Android（模拟运行）：** 安装在 Husk 启动的 Android 系统内部。
       options:
-        - Translation Layer (native)
-        - Android (emulated)
+        - 转译层（原生）
+        - Android（模拟运行）
     validations:
       required: true
   - type: input
     id: name
     attributes:
-      label: Game or app
-      description: Its name and, if you know it, its package name and version.
+      label: 游戏或应用
+      description: 它的名称，以及（如果你知道）它的包名和版本。
       placeholder: Geometry Dash (com.robtopx.geometryjump) 2.207
     validations:
       required: true
   - type: input
     id: source
     attributes:
-      label: Where is the APK from?
-      description: Husk's Store tab, Google Play on another device, APKMirror, the developer's site, F-Droid, ...
-      placeholder: Husk's Store tab
+      label: 这个 APK 来自哪里？
+      description: Husk 的 Store 标签页、另一台设备上的 Google Play、APKMirror、开发者官网、F-Droid 等。
+      placeholder: Husk 的 Store 标签页
     validations:
       required: true
   - type: dropdown
     id: problem
     attributes:
-      label: What goes wrong?
+      label: 出了什么问题？
       options:
-        - It won't start, or stops on a loading or black screen
-        - It crashes (Husk closes)
-        - It shows "Did not start" or "Crashed" in the library
-        - Graphics are wrong or missing
-        - No sound, or broken sound
-        - Touch, keyboard or controller doesn't work
-        - It is too slow
-        - Other
+        - 无法启动，或卡在加载画面、黑屏
+        - 闪退（Husk 关闭）
+        - 在资料库中显示 "Did not start" 或 "Crashed"
+        - 画面异常或缺失
+        - 没有声音，或声音损坏
+        - 触摸、键盘或手柄无效
+        - 运行太慢
+        - 其他
     validations:
       required: true
   - type: textarea
     id: what
     attributes:
-      label: What happened?
-      description: What you did, how far it got, and what you saw. A screenshot or screen recording helps a lot.
+      label: 发生了什么？
+      description: 你做了什么、进行到了哪一步、你看到了什么。截图或屏幕录制会很有帮助。
       placeholder: |
-        Added the APK, tapped Play, the loading screen showed for 10 seconds, then Husk closed.
+        已添加 APK，点按 Play，加载画面显示了 10 秒，随后 Husk 关闭。
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs
+      label: 日志
       description: |
-        **Required.** Attach `husk.log` and `husk-native.log` from right after the problem (drag the files into this box). They are in the **Files** app › **On My iPhone** › **Husk**.
-        If Husk crashed, open it again: it offers a crash report you can share. For the Translation Layer, the game's page › **Technical Details** has its report too.
-      placeholder: Drag husk.log and husk-native.log here.
+        **必填。** 请附上问题刚发生时的 `husk.log` 和 `husk-native.log`（把文件拖进本框）。它们位于「文件」App ›「我的 iPhone」›「Husk」。
+        如果 Husk 闪退了，请重新打开：它会提供可分享的崩溃报告。使用转译层时，游戏页面 › **技术详情** 中也有它的报告。
+      placeholder: 把 husk.log 和 husk-native.log 拖到这里。
     validations:
       required: true
   - type: input
     id: husk-version
     attributes:
-      label: Husk version
-      description: The top of Settings shows it, for example "Version 1.0.1 · 6bee247". Copy the whole line.
+      label: Husk 版本
+      description: 「设置」页面顶部会显示，例如 "Version 1.0.1 · 6bee247"。请整行复制。
       placeholder: Version 1.0.1 · 6bee247
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Device
+      label: 设备
       placeholder: iPhone 15 Pro
     validations:
       required: true
   - type: input
     id: ios
     attributes:
-      label: iOS version
+      label: iOS 版本
       placeholder: "18.6.2"
     validations:
       required: true
   - type: dropdown
     id: jit
     attributes:
-      label: How do you turn on JIT?
+      label: 你如何开启 JIT？
       options:
         - StikDebug
-        - Built-in StikJIT
+        - 内置 StikJIT
         - TrollStore
-        - Jailbreak (Dopamine or other)
-        - I don't have JIT
-        - Other
+        - 越狱（Dopamine 或其他）
+        - 我没有 JIT
+        - 其他
     validations:
       required: true
   - type: checkboxes
     id: checks
     attributes:
-      label: Before you send it
+      label: 提交前请确认
       options:
-        - label: I am on the newest Husk release.
+        - label: 我使用的已是最新版本的 Husk。
           required: true
-        - label: I searched the existing issues and this game is not already reported.
+        - label: 我已搜索过现有 issue，此游戏此前没有被报告过。
           required: true

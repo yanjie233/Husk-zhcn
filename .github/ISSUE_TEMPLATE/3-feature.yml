@@ -1,24 +1,24 @@
-name: Feature request
-description: Something Husk could do that it doesn't.
-title: "[Feature] "
+name: 功能请求
+description: Husk 还可以做到、但目前还没有的功能。
+title: "[功能] "
 labels: ["enhancement"]
 body:
   - type: textarea
     id: what
     attributes:
-      label: What would you like Husk to do?
+      label: 你希望 Husk 做什么？
     validations:
       required: true
   - type: textarea
     id: why
     attributes:
-      label: Why? What would it let you do?
+      label: 为什么需要？它能让你做到什么？
     validations:
       required: true
   - type: checkboxes
     id: checks
     attributes:
-      label: Before you send it
+      label: 提交前请确认
       options:
-        - label: I searched the existing issues and this is not already requested.
+        - label: 我已搜索过现有 issue，此需求此前没有被提出过。
           required: true

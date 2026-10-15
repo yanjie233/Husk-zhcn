@@ -96,6 +96,8 @@ APP_PLIST="$DD/Build/Products/Release-iphoneos/Husk.app/Info.plist"
 if [ -f "$APP_PLIST" ]; then
     COMMIT="$(git -C "$HUSK_ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
     git -C "$HUSK_ROOT" diff --quiet 2>/dev/null || COMMIT="$COMMIT-dirty"
+    # HuskBuildCommit/HuskBuildDate are pre-seeded in src/app/Husk/Info.plist ("unstamped"): macOS plutil -replace
+    # fails on a key that is not already there, and a fresh checkout has neither.
     plutil -replace HuskBuildCommit -string "$COMMIT" "$APP_PLIST"
     plutil -replace HuskBuildDate -string "$(date -u '+%Y-%m-%d %H:%M UTC')" "$APP_PLIST"
     echo "==> stamped build $COMMIT"
@@ -132,7 +134,10 @@ fi
 # @rpath/libANGLE-shared.dylib". Everything else in this validation passed. A
 # check that covers one of two required libraries is a check that reports
 # success on a bundle that cannot launch.
-for lib in libqemu-aarch64-softmmu.dylib libANGLE-shared.dylib libhuskps4.dylib; do
+# libhuskps4.dylib (the PS4 layer) is deliberately absent in this fork: its sources are private upstream, so it is
+# not built and not embedded (see project.yml). PS4Store checks for it at runtime and hides PS4 features when it is
+# missing, so it must not be required here -- but when a build *does* carry it, it must be a real embedded dylib.
+for lib in libqemu-aarch64-softmmu.dylib libANGLE-shared.dylib; do
     if [ ! -f "$APP/Frameworks/$lib" ]; then
         echo "  MISSING  Frameworks/$lib" >&2
         rc=1
@@ -141,6 +146,10 @@ for lib in libqemu-aarch64-softmmu.dylib libANGLE-shared.dylib libhuskps4.dylib;
             "$(du -h "$APP/Frameworks/$lib" | cut -f1)"
     fi
 done
+if [ -f "$HUSK_ROOT/build/ios-arm64/lib/libhuskps4.dylib" ] && [ ! -f "$APP/Frameworks/libhuskps4.dylib" ]; then
+    echo "  MISSING  Frameworks/libhuskps4.dylib (libhuskps4.dylib was built but not embedded)" >&2
+    rc=1
+fi
 
 # Guest images, firmware, and blank disk seeds required by first launch.
 for f in vmlinuz-virt initramfs-virt husk-jit.js \

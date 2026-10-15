@@ -100,7 +100,7 @@ struct AppDetailView: View {
                 } label: {
                     HStack {
                         Spacer()
-                        Label(canOpen ? "Launch" : "Starting Android…",
+                        Label(canOpen ? "启动" : "正在启动 Android…",
                               systemImage: canOpen ? "play.fill" : "hourglass")
                             .font(.headline)
                         Spacer()
@@ -111,43 +111,43 @@ struct AppDetailView: View {
                 .disabled(!canOpen)
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             } footer: {
-                if !host.isReady { Text("It opens as soon as Android answers.") }
+                if !host.isReady { Text("Android 响应后即会打开。") }
             }
 
             Section {
-                LabeledContent("Version", value: live.version ?? "—")
-                LabeledContent("Size", value: live.sizeBytes.map(Self.bytes) ?? "—")
-                LabeledContent("Last Used", value: live.lastUsed.map(Self.when) ?? "Never from Husk")
+                LabeledContent("版本", value: live.version ?? "—")
+                LabeledContent("大小", value: live.sizeBytes.map(Self.bytes) ?? "—")
+                LabeledContent("上次使用", value: live.lastUsed.map(Self.when) ?? "从未在 Husk 中使用")
             }
 
             Section {
                 Button { router.openFiles(at: "/sdcard/Android/data/\(app.name)") } label: {
-                    Label("Open in Files", systemImage: "folder")
+                    Label("在文件中打开", systemImage: "folder")
                 }
                 Button { appInfo() } label: {
-                    Label("App Info", systemImage: "info.circle")
+                    Label("应用信息", systemImage: "info.circle")
                 }
                 .disabled(!canOpen)
                 Button(role: .destructive) { confirmUninstall = true } label: {
-                    Label("Uninstall", systemImage: "trash")
-                }
-                .disabled(!canOpen)
-            }
+                    Label("卸载", systemImage: "trash")
+                    }
+                    .disabled(!canOpen)
+                    }
         }
         .listStyle(.insetGrouped)
         .navigationTitle(live.label)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { menu } }
-        .confirmationDialog("Uninstall \(live.label)?", isPresented: $confirmUninstall,
+        .confirmationDialog("卸载 \(live.label)？", isPresented: $confirmUninstall,
                             titleVisibility: .visible) {
-            Button("Uninstall", role: .destructive) {
+            Button("卸载", role: .destructive) {
                 host.uninstall(app.name)
                 dismiss()
             }
-            Button("Cancel", role: .cancel) { }
+            Button("取消", role: .cancel) { }
         } message: {
-            Text("Its data goes with it. Save Android afterwards or the change is "
-               + "lost on the next launch.")
+            Text("其数据会一并删除。之后请保存 Android，"
+               + "否则更改会在下次启动时丢失。")
         }
     }
 
@@ -157,14 +157,14 @@ struct AppDetailView: View {
         Menu {
             Button {
                 UIPasteboard.general.string = app.name
-            } label: { Label("Copy Package Name", systemImage: "doc.on.doc") }
+            } label: { Label("复制包名", systemImage: "doc.on.doc") }
             Button { appInfo() } label: {
-                Label("Show in Android Settings", systemImage: "gearshape")
+                Label("在 Android 设置中查看", systemImage: "gearshape")
             }
             .disabled(!canOpen)
             Divider()
             Button(role: .destructive) { confirmUninstall = true } label: {
-                Label("Uninstall", systemImage: "trash")
+                Label("卸载", systemImage: "trash")
             }
             .disabled(!canOpen)
         } label: {
@@ -215,9 +215,9 @@ struct AppDetailView: View {
     static func when(_ date: Date) -> String {
         let f = DateFormatter()
         if Calendar.current.isDateInToday(date) {
-            f.dateFormat = "'Today,' h:mm a"
+            f.dateFormat = "今天 HH:mm"
         } else if Calendar.current.isDateInYesterday(date) {
-            f.dateFormat = "'Yesterday,' h:mm a"
+            f.dateFormat = "昨天 HH:mm"
         } else {
             f.dateStyle = .medium
             f.timeStyle = .none

@@ -1,4 +1,8 @@
-# Husk
+# Husk 中文版
+
+> 这是 [Leviidev/Husk](https://github.com/Leviidev/Husk) 的简体中文分叉：界面与文档已汉化，
+> Android 系统内置中文字体，并由 GitHub Actions 自动构建、发布到 [Releases](https://github.com/yanjie233/Husk-zhcn/releases)。
+> 上游的 PS4 模拟层因源码未公开而未包含（其余功能完整）。
 
 <p align="center">
   <a href="https://trendshift.io/repositories/233057?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-233057" target="_blank" rel="noopener noreferrer">
@@ -8,26 +12,26 @@
 
 [![Husk Downloads](https://img.shields.io/github/downloads/leviidev/husk/total?style=for-the-badge&color=5865F2&labelColor=111111)](https://github.com/leviidev/husk/releases)
 
-Android apps and games on your iPhone.
+在 iPhone 上运行 Android 应用和游戏。
 
-Add an APK, tap it, and it opens full-screen. Husk runs it in one of two ways,
-shown as the two sides of its Library:
+添加一个 APK，点它，就会全屏打开。Husk 以两种方式之一运行它，
+对应其资料库（Library）的两个分区：
 
-- **Translation Layer.** The game's own 64-bit Android code runs directly on
-  the iPhone's processor, and Husk stands in for Android around it: the C
-  library, the Java calls the game makes, OpenGL ES (through ANGLE), Vulkan
-  (through MoltenVK), sound, touch and controllers. No Android boots, so a
-  game starts in seconds, and its code is never emulated.
-  See [docs/04-translation-layer.md](docs/04-translation-layer.md).
-- **Emulation.** A full Android system (LineageOS) boots under QEMU inside
-  Husk, for apps the translation layer cannot run yet and for using Android
-  itself. iOS gives apps no hypervisor, so the processor is emulated, and
-  this is much slower than the translation layer.
-  See [docs/00-architecture.md](docs/00-architecture.md).
+- **翻译层（Translation Layer）。** 游戏自己的 64 位 Android 代码直接在
+  iPhone 的处理器上运行，由 Husk 在其周围顶替 Android 的角色：C
+  库、游戏发起的 Java 调用、OpenGL ES（通过 ANGLE）、Vulkan
+  （通过 MoltenVK）、声音、触摸和手柄。不启动 Android，因此
+  游戏几秒内即可开始，其代码从不被模拟。
+  参见 [docs/04-translation-layer.md](docs/04-translation-layer.md)。
+- **模拟（Emulation）。** 一整套 Android 系统（LineageOS）在 Husk 内部的
+  QEMU 下启动，用于翻译层尚无法运行的应用，也用于直接使用
+  Android 本身。iOS 不向应用提供 hypervisor，因此处理器是被模拟的，
+  这比翻译层慢得多。
+  参见 [docs/00-architecture.md](docs/00-architecture.md)。
 
-## Screenshots
+## 截图
 
-### Games on the Translation Layer
+### 在翻译层上运行的游戏
 
 <table>
   <tr>
@@ -40,108 +44,88 @@ shown as the two sides of its Library:
   </tr>
 </table>
 
-### The app
+### 应用本身
 
 <table>
   <tr>
-    <td align="center" width="33%"><img src="Screenshots/library.png" alt="Library" width="100%"><br><sub><b>Library</b></sub></td>
-    <td align="center" width="33%"><img src="Screenshots/game-settings.png" alt="Game Settings" width="100%"><br><sub><b>Game Settings</b></sub></td>
-    <td align="center" width="33%"><img src="Screenshots/settings.png" alt="Settings" width="100%"><br><sub><b>Settings</b></sub></td>
+    <td align="center" width="33%"><img src="Screenshots/library.png" alt="Library" width="100%"><br><sub><b>资料库</b></sub></td>
+    <td align="center" width="33%"><img src="Screenshots/game-settings.png" alt="Game Settings" width="100%"><br><sub><b>游戏设置</b></sub></td>
+    <td align="center" width="33%"><img src="Screenshots/settings.png" alt="Settings" width="100%"><br><sub><b>设置</b></sub></td>
   </tr>
 </table>
 
-## What the Translation Layer runs
+## 翻译层能运行什么
 
-Games made with an engine Husk has a driver for:
+Husk 为其提供了驱动的引擎所制作的游戏：
 
 - Unity
-- Unreal Engine 4 (through Vulkan)
+- Unreal Engine 4（通过 Vulkan）
 - cocos2d-x
-- Godot 3 and 4 (GLES2, GLES3 and the Compatibility renderer)
-- SDL2 and SDL3, including LÖVE games
-- GameActivity (Minecraft) and NativeActivity
-- Rockstar's own engine (GTA: San Andreas)
+- Godot 3 和 4（GLES2、GLES3 与兼容性渲染器）
+- SDL2 和 SDL3，包括 LÖVE 游戏
+- GameActivity（Minecraft）与 NativeActivity
+- Rockstar 自家的引擎（GTA: San Andreas）
 
-Games see Google Play services as installed and signed out, so the ones that
-check for it start normally; Play Games sign-in, cloud saves and purchases are
-not available. Geometry Dash can load [Geode](https://geode-sdk.org) mods.
+游戏会看到 Google Play 服务已安装但未登录，因此会检查它的那些游戏能正常启动；Play Games 登录、云存档与内购不可用。Geometry Dash 可以加载 [Geode](https://geode-sdk.org) 模组。
 
-An APK needs 64-bit (`arm64-v8a`) native code. iPhones cannot run 32-bit ARM
-code, so an APK that only has 32-bit libraries cannot run here. APKs and
-split bundles (`.xapk`, `.apkm`, `.apks`, or a Play download's separate split
-APKs and asset packs) can all be added. Apps written only
-in Java, with no native engine, are not supported on the translation layer;
-Emulation is the way to run those.
+APK 需要 64 位（`arm64-v8a`）原生代码。iPhone 无法运行 32 位 ARM
+代码，因此只有 32 位库的 APK 无法在此运行。APK 与分发包
+（`.xapk`、`.apkm`、`.apks`，或一次 Play 下载分离出的 split
+APK 与 asset pack）都可以添加。只用 Java 编写、没有原生引擎的应用在翻译层上不受支持；
+运行它们要用模拟。
 
-One game runs per launch of Husk. To switch, press **Close Husk to Play** on
-the other game's page; when you open Husk again, that game starts by itself.
+每次启动 Husk 只运行一个游戏。要切换，请在另一个游戏的页面上按 **Close Husk to Play**；再次打开 Husk 时，那个游戏会自行开始。
 
-A game's saves can be backed up to a `.zip` from its page and restored later,
-on the same iPhone or another. If a game crashes Husk, the next launch shows
-what happened, with a report you can share.
+游戏的存档可以在其页面备份为 `.zip`，之后在同一个或另一台 iPhone 上恢复。如果某个游戏让 Husk 崩溃，下次启动会显示发生了什么，并附带一份可以分享的报告。
 
-## Installing
+## 安装
 
-**SideStore, AltStore and other sideloaders:** add Husk's source, and the
-sideloader installs Husk and offers each update as it comes out.
+**SideStore、AltStore 及其他侧载工具：** 添加 Husk 的源，侧载工具就会安装 Husk，并在其每次发布更新时提供更新。
 
 ```
-https://raw.githubusercontent.com/Leviidev/Husk/main/altsource.json
+https://raw.githubusercontent.com/yanjie233/Husk-zhcn/main/altsource.json
 ```
 
-In SideStore or AltStore: Sources › + › paste the address above.
+在 SideStore 或 AltStore 中：Sources › + › 粘贴上面的地址。
 
-**Or by hand:** download `Husk.ipa` from
-[Releases](https://github.com/leviidev/husk/releases) and install it with
-SideStore, AltStore or TrollStore. It is one IPA for all of them: it carries
-Husk's entitlements, which TrollStore keeps, and a sideloader re-signs it with
-your own.
+**或者手动：** 从 [Releases](https://github.com/yanjie233/Husk-zhcn/releases)（`nightly` 即最新构建）下载 `Husk.ipa`，并用 SideStore、AltStore 或 TrollStore 安装。对它们来说这是同一个 IPA：它带有 Husk 的 entitlements，TrollStore 会保留这些 entitlements，而侧载工具会用你自己的重新签名。
 
-Husk needs iOS 16.0 or later.
+Husk 需要 iOS 16.0 或更高版本。
 
 ## JIT
 
-Both the translation layer and Emulation need JIT, which on iOS comes from a
-debugger. Husk can get it in several ways, and walks you through each one
-(Settings › JIT & Sideload):
+翻译层和模拟都需要 JIT，而在 iOS 上 JIT 来自调试器。Husk 可以通过若干种方式获取它，并会逐步引导你完成每一种（Settings › JIT & Sideload）：
 
-- **Built-in StikJIT** (iOS 26 and later): Husk turns JIT on itself, with no
-  second app. On iOS 27 it pairs with your iPhone from Settings, with no
-  computer. See [docs/06-built-in-jit.md](docs/06-built-in-jit.md).
-- **StikDebug**, installed alongside Husk.
-- **TrollStore or a Dopamine jailbreak** ("Allow JIT in Apps"), on iOS
-  versions before 26 only. From iOS 26 only a debugger can grant JIT.
+- **内置 StikJIT**（iOS 26 及以上）：Husk 自己开启 JIT，无需第二个应用。在 iOS 27 上，它可以在 Settings 中与你的 iPhone 配对，无需电脑。参见 [docs/06-built-in-jit.md](docs/06-built-in-jit.md)。
+- **StikDebug**，与 Husk 并排安装。
+- **TrollStore 或 Dopamine 越狱**（"Allow JIT in Apps"），仅适用于 iOS 26 之前的版本。从 iOS 26 起，只有调试器才能授予 JIT。
 
-## Building
+## 构建
 
-Husk is built on a Mac with Xcode. The build scripts also call `meson`,
-`ninja`, `pkg-config`, `python3`, `xcodegen`, `qemu-img` and a Rust
-toolchain with the `aarch64-apple-ios` target.
+本分叉默认走 CI：推送本仓库会触发 [GitHub Actions](https://github.com/yanjie233/Husk-zhcn/actions) 在 macOS 上
+执行 `./scripts/ci_build.sh` 并把 `Husk.ipa` / `Husk.tipa` 发布到 Releases（首次约 2–4 小时，之后命中缓存约 20–40 分钟）。
+CI 无法构建的两处差异：PS4 层（`libhuskps4.dylib`，上游源码私有，已从工程中移除）与 Java 运行时
+（直接取自上游 2.0 发布的 IPA，其源码 `src/java-framework` 自 2.0 起未改动）。
+
+本地构建：Husk 在装有 Xcode 的 Mac 上构建。构建脚本还会调用 `meson`、
+`ninja`、`pkg-config`、`python3`、`xcodegen`、`qemu-img`，以及带有
+`aarch64-apple-ios` 目标的 Rust 工具链。
 
 ```sh
 ./scripts/ci_build.sh
 ```
 
-From a clean checkout this fetches and cross-compiles everything Husk links:
+从一份干净的检出开始，这会抓取并交叉编译 Husk 所链接的全部内容：
 
-- QEMU and its dependencies
-- ANGLE and virglrenderer
+- QEMU 及其依赖
+- ANGLE 和 virglrenderer
 - MoltenVK
-- the on-device pairing library
+- 设备端配对库
 
-It then builds the app and writes the IPA to `build/Husk.ipa`. The first run
-takes a couple of hours, and later runs reuse what is already built. After
-that, `./scripts/package_ipa.sh` rebuilds just the app and writes
-`~/Desktop/Husk.ipa`.
+随后构建应用，并把 IPA 写入 `build/Husk.ipa`。首次运行要花几个小时，之后的运行会复用已经构建好的部分。此后，`./scripts/package_ipa.sh` 只重新构建应用并写出 `~/Desktop/Husk.ipa`。
 
-`tools/regress/run.sh` plays a set of games on the Mac through the
-translation layer and checks each against a reference screenshot (see the
-top of `tools/regress/cases.txt` for what it needs).
+`tools/regress/run.sh` 通过翻译层在 Mac 上运行一组游戏，并把每个游戏与一张参考截图比对（它需要什么，见 `tools/regress/cases.txt` 顶部）。
 
-## Licence
+## 许可证
 
-GPL-2.0-or-later. Husk links QEMU, which is GPLv2, so the shipped binary is a
-combined GPLv2 work and the full source is public. The translation layer is
-Husk's own code, under the same licence. Husk cannot go on the App Store, both
-because of that and because it needs `get-task-allow` plus a debugger
-attaching at runtime. See [docs/01-licensing.md](docs/01-licensing.md).
+GPL-2.0-or-later。Husk 链接了 QEMU，而 QEMU 是 GPLv2，因此发布的二进制是一个 GPLv2 的组合作品，完整源码公开。翻译层是 Husk 自己的代码，采用同样的许可证。Husk 无法上架 App Store，既因为这一点，也因为它需要 `get-task-allow` 外加一个在运行时附加的调试器。参见 [docs/01-licensing.md](docs/01-licensing.md)。

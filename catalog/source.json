@@ -8,7 +8,7 @@
       "version": "1.21.0",
       "downloadURL": "https://f-droid.org/F-Droid.apk",
       "iconURL": "https://f-droid.org/repo/org.fdroid.fdroid/en-US/icon_Qn89D6m2Hn4p_wO89v3z-iR7mPz5E0l9iA7xJmB7U_E=.png",
-      "localizedDescription": "F-Droid is an installable catalogue of FOSS (Free and Open Source Software) applications for the Android platform."
+      "localizedDescription": "F-Droid 是一个可安装的自由开源软件（FOSS）应用目录，收录 Android 平台的应用。"
     },
     {
       "name": "Aurora Store",
@@ -16,7 +16,7 @@
       "version": "4.5.1",
       "downloadURL": "https://f-droid.org/repo/com.aurora.store_55.apk",
       "iconURL": "https://f-droid.org/repo/com.aurora.store/en-US/icon_W82R_G632wG1rKjF5s2Yt68WnIq7zB1q2C51Xf7n1uE=.png",
-      "localizedDescription": "Aurora Store is an unofficial, FOSS client to Google's Play Store with an elegant design. Not only does it download, update, and search for apps, it empowers the user with new features."
+      "localizedDescription": "Aurora Store 是 Google Play 商店的非官方自由开源客户端，界面精美。除下载、更新和搜索应用外，还为你带来诸多新功能。"
     },
     {
       "name": "Termux",
@@ -24,7 +24,7 @@
       "version": "0.118.0",
       "downloadURL": "https://f-droid.org/repo/com.termux_118.apk",
       "iconURL": "https://f-droid.org/repo/com.termux/en-US/icon_J_Q028LzW9M_4H7U7I9E7S4Q2K6M4B_M7N8O0P_H0Z4=.png",
-      "localizedDescription": "Termux is an Android terminal emulator and Linux environment app that works directly with no rooting or setup required."
+      "localizedDescription": "Termux 是一款 Android 终端模拟器与 Linux 环境应用，无需 root 或任何配置即可直接使用。"
     },
     {
       "name": "VLC",
@@ -32,7 +32,7 @@
       "version": "3.5.4",
       "downloadURL": "https://f-droid.org/repo/org.videolan.vlc_13050404.apk",
       "iconURL": "https://f-droid.org/repo/org.videolan.vlc/en-US/icon_D82E_G5w2M6Y2_Z0Z3O5N1W_O_N_F_Q_X_Z_R_W_K_O=.png",
-      "localizedDescription": "VLC for Android is a full audio player, with a complete database, an equalizer and filters, playing all weird audio formats."
+      "localizedDescription": "VLC 是完整的 Android 音频播放器，拥有完整的媒体库、均衡器与滤镜，可播放各种冷门音频格式。"
     }
   ]
 }

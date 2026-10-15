@@ -1,47 +1,47 @@
-# Translation Layer: Milestone 2 (Dalvik / DEX Execution) Handoff
+# 翻译层：里程碑 2（Dalvik / DEX 执行）交接
 
-## Summary for Claude
+## 给 Claude 的小结
 
-We have implemented Dalvik (DEX) bytecode execution and core Android framework shims to run Flappy Bird (`FlappyBird_64bit.apk`) natively on iOS/macOS without running Android under QEMU.
+我们已经实现了 Dalvik（DEX）字节码执行和核心 Android 框架 shim，以便在不于 QEMU 下运行 Android 的情况下，让 Flappy Bird（`FlappyBird_64bit.apk`）在 iOS/macOS 上原生运行。
 
-Frame 0 successfully renders pixel-perfect into the 540x960 ARGB8888 framebuffer (title screen with `(c) .GEARS 2013`, city skyline, ground, and logo).
+第 0 帧成功地逐像素渲染进 540x960 的 ARGB8888 帧缓冲（标题画面带 `(c) .GEARS 2013`、城市天际线、地面和 logo）。
 
-The user reported:
-> "shows a single frame of it then just turns white, it might just be loading, if it is then its too slow"
+用户的反馈是：
+> "只显示了一帧，然后就变成白屏了，也可能只是在加载，如果是在加载那也太慢了"
 
-We investigated both issues directly on device logs pulled via `xcrun devicectl` and with isolated macOS test harnesses. Here is the exact diagnosis and what needs to be done.
-
----
-
-## 1. Issue 1: Performance / Extreme Slowness
-
-### Root Cause
-In `src/translation-layer/husk-tl-dex.c`:
-`tl_dex_invoke` was calling `dex_log("  pc=%d op=0x%02x", pc, opcode)` on every opcode, which executed `dlsym(RTLD_DEFAULT, "tl_log_line")`, acquired a `pthread_mutex`, reallocated log buffers, and printed to stderr. A single frame generated 19,000+ log lines, slowing execution by 10,000x and flooding SwiftUI with megabytes of log text.
-
-### Progress
-- In commit `b1aa706`, we removed all per-opcode and per-invoke `dex_log` lines from `husk-tl-dex.c`.
-- **Caution**: Do **NOT** eagerly run `<clinit>` across all 9,182 classes in the APK at startup. The APK contains hundreds of Google Play Services and AndroidX classes with circular dependencies or unshimmed native hooks. Class initialization must be **on-demand (lazy)**.
+我们通过 `xcrun devicectl` 拉取的设备日志，以及彼此隔离的 macOS 测试脚手架，直接在两个问题上做了排查。下面是确切的诊断，以及接下来需要做的事。
 
 ---
 
-## 2. Issue 2: Why Frame 2 Turns White
+## 1. 问题 1：性能 / 极度缓慢
 
-### Root Cause
-1. At Frame 0, the title screen is drawn with cyan sky (`fb[0] = 0xffcac04e`).
-2. At Frame 2, `fb[0]` becomes `0xffffffff` (solid white) because `canvas_drawRect(0, 0, 540, 960, paint)` is executed with a white paint overlay.
-3. This white rectangle is the game's death/flash overlay: field `aQ` of class `c` represents the flash alpha (`0..255`). In Frame 2, `aQ` jumped from `0` to `255`!
-4. `aQ` jumped to `255` inside `c.a` (the physics tick called by `c.doFrame`) because `this.a` (the game state enum `com/flappybird/recreation/d`) was `NULL` (`0x00000000`).
-5. When `this.a` is `NULL`, `this.a.ordinal()` fails/returns 0 or hits the default branch, which `c.a` treats as game-over/death, triggering the full-screen white flash overlay (`aQ = 255`).
-6. Why was `this.a` NULL? Because `this.a` is assigned via `sget-object` from `Lcom/flappybird/recreation/d;->a`. But `d.<clinit>` was never executed, so all static fields (`d.a`, `d.b`, `d.c`...) remained `NULL`.
+### 根本原因
+在 `src/translation-layer/husk-tl-dex.c` 中：
+`tl_dex_invoke` 在每条操作码上都会调用 `dex_log("  pc=%d op=0x%02x", pc, opcode)`，这会执行 `dlsym(RTLD_DEFAULT, "tl_log_line")`、获取一个 `pthread_mutex`、重新分配日志缓冲区，并向 stderr 打印。单帧会产生 19,000 多行日志，使执行变慢 10,000 倍，并把数 MB 的日志文本灌进 SwiftUI。
+
+### 进展
+- 在提交 `b1aa706` 中，我们从 `husk-tl-dex.c` 里移除了所有逐操作码和逐调用的 `dex_log` 行。
+- **注意**：绝**不要**在启动时急切地对 APK 中全部 9,182 个类运行 `<clinit>`。该 APK 包含数百个 Google Play Services 和 AndroidX 类，它们带有循环依赖或未经 shim 的原生钩子。类初始化必须是**按需（惰性）**的。
 
 ---
 
-## 3. Solution / Immediate Next Steps
+## 2. 问题 2：为什么第 2 帧会变白
 
-### Step 1: Implement On-Demand `<clinit>`
-In `src/translation-layer/husk-tl-dex.c`:
-Add a helper to initialize a class on first access:
+### 根本原因
+1. 第 0 帧时，标题画面以青色天空绘制（`fb[0] = 0xffcac04e`）。
+2. 第 2 帧时，`fb[0]` 变成 `0xffffffff`（纯白），因为执行了带白色 paint 叠加的 `canvas_drawRect(0, 0, 540, 960, paint)`。
+3. 这个白色矩形就是游戏的死亡/闪光叠加层：类 `c` 的字段 `aQ` 表示闪光透明度（`0..255`）。在第 2 帧，`aQ` 从 `0` 跳到了 `255`！
+4. `aQ` 跳到 `255` 是在 `c.a` 内部（`c.doFrame` 调用的物理 tick），因为 `this.a`（游戏状态枚举 `com/flappybird/recreation/d`）是 `NULL`（`0x00000000`）。
+5. 当 `this.a` 为 `NULL` 时，`this.a.ordinal()` 会失败/返回 0 或落入 default 分支，而 `c.a` 把它当作游戏结束/死亡，从而触发全屏白色闪光叠加层（`aQ = 255`）。
+6. 为什么 `this.a` 是 NULL？因为 `this.a` 是通过 `sget-object` 从 `Lcom/flappybird/recreation/d;->a` 赋值的。但 `d.<clinit>` 从未执行，所以所有静态字段（`d.a`、`d.b`、`d.c`……）都保持 `NULL`。
+
+---
+
+## 3. 解决方案 / 接下来立即要做的事
+
+### 第 1 步：实现按需的 `<clinit>`
+在 `src/translation-layer/husk-tl-dex.c` 中：
+增加一个在首次访问时初始化类的辅助函数：
 
 ```c
 static void dex_ensure_class_initialized(tl_dex_context *ctx, tl_dex_class *clazz)
@@ -56,24 +56,24 @@ static void dex_ensure_class_initialized(tl_dex_context *ctx, tl_dex_class *claz
 }
 ```
 
-Call `dex_ensure_class_initialized(ctx, f->clazz);` in:
-- `sget` / `sput` (opcodes `0x60` .. `0x6d`) when accessing static fields.
-- `new-instance` (opcode `0x22`).
-- `invoke-static` (opcode `0x71`, `0x77`).
+在下列位置调用 `dex_ensure_class_initialized(ctx, f->clazz);`：
+- 访问静态字段时的 `sget` / `sput`（操作码 `0x60` .. `0x6d`）。
+- `new-instance`（操作码 `0x22`）。
+- `invoke-static`（操作码 `0x71`、`0x77`）。
 
-### Step 2: Verify Flappy Bird State Transition
-In `c.doFrame`:
-- Check that `this.a` is properly set to `d.a` (or whichever title/ready state enum constant it starts in).
-- Make sure `android.graphics.Rect.intersects(Rect, Rect)` and `Rect.set(...)` in `src/translation-layer/husk-tl-framework.c` are shimmed (currently logged as `invoke ?->intersects (native=0x0)`).
-- When `intersects` was unshimmed, collision detection may have erroneously evaluated to a collision with pipes or the ground.
+### 第 2 步：核实 Flappy Bird 的状态转换
+在 `c.doFrame` 中：
+- 检查 `this.a` 是否被正确设置为 `d.a`（或者它一开始所在的那个标题/准备状态枚举常量）。
+- 确保 `src/translation-layer/husk-tl-framework.c` 中的 `android.graphics.Rect.intersects(Rect, Rect)` 和 `Rect.set(...)` 已被 shim（目前记录为 `invoke ?->intersects (native=0x0)`）。
+- 在 `intersects` 未被 shim 时，碰撞检测可能被错误地判定为与管道或地面发生了碰撞。
 
-### Step 3: Test on macOS with `dex-test.c`
-Run:
+### 第 3 步：用 `dex-test.c` 在 macOS 上测试
+运行：
 ```bash
 clang -O2 tools/dex-test.c src/translation-layer/husk-tl-dex.c src/translation-layer/husk-tl-framework.c src/translation-layer/husk-tl-zip.c -Isrc/translation-layer -lz -framework CoreGraphics -framework ImageIO -framework CoreFoundation -o /tmp/dex-test && /tmp/dex-test
 ```
-Verify that `fb[0]` stays cyan (`0xffcac04e`) across all 60 frames and does NOT turn white (`0xffffffff`).
+核实 `fb[0]` 在全部 60 帧中都保持青色（`0xffcac04e`），而**不**变白（`0xffffffff`）。
 
-### Step 4: Package and Commit
-- Run `bash scripts/package_ipa.sh` to package `~/Desktop/Husk.ipa`.
-- Commit directly to `origin/main` without co-author tags.
+### 第 4 步：打包并提交
+- 运行 `bash scripts/package_ipa.sh` 打包 `~/Desktop/Husk.ipa`。
+- 直接提交到 `origin/main`，不加 co-author 标记。

@@ -1,0 +1,186 @@
+name: build
+
+# Cloud build for the zh fork: from a clean checkout to installable Husk.ipa /
+# Husk.tipa, published to Releases. macOS runners are free for public repos.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Builds take hours; serialize them so a queued run waits instead of racing the
+# release upload, and a newer push does not kill a build about to finish.
+concurrency:
+  group: husk-build
+  cancel-in-progress: false
+
+jobs:
+  ipa:
+    runs-on: macos-26
+    # The hosted macOS limit is 6h; leave margin for the release steps.
+    timeout-minutes: 350
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image ships several Xcode versions and simulator runtimes and leaves
+      # only ~14 GB free; a cold build needs far more. Keep the selected Xcode,
+      # drop the rest and the simulators (we only build -sdk iphoneos).
+      - name: free disk space
+        run: |
+          KEEP="$(xcode-select -p | sed 's|/Contents/Developer||')"
+          echo "keeping $KEEP"
+          for d in /Applications/Xcode*.app; do
+            [ "$d" = "$KEEP" ] || sudo rm -rf "$d"
+          done
+          sudo rm -rf /Library/Developer/CoreSimulator ~/Library/Developer/CoreSimulator
+          xcodebuild -version
+          df -h /
+
+      - name: install build tools
+        run: |
+          brew install xcodegen meson ninja pkg-config qemu
+
+      # rppairing needs rustc with the iOS target; the image may or may not
+      # ship rustup.
+      - name: rust toolchain
+        run: |
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          fi
+          . "$HOME/.cargo/env"
+          rustup target add aarch64-apple-ios
+          rustc --version
+
+      # Cached trees make later runs minutes instead of hours. The key hashes
+      # the build scripts and patches, which is what the staged sources depend
+      # on. Save is best-effort: a cache over the repo quota must not fail the
+      # build.
+      - name: restore build trees
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            third_party
+            build
+            guests
+            src/rppairing-ios/target
+          key: husk-v1-${{ hashFiles('scripts/**', 'patches/**') }}
+          restore-keys: husk-v1-
+
+      # The Java runtime and Android's fonts/CA certs need the 12 GB Lineage
+      # image plus a JDK and r8, which is far too heavy for CI. Both are
+      # unchanged since upstream 2.0 (git log f0bd526..HEAD -- src/java-framework
+      # is empty; android-system comes straight from that same image), so take
+      # them from the official 2.0 release IPA instead. GPL-2.0, same project.
+      - name: stage java runtime + android-system from upstream 2.0
+        run: |
+          mkdir -p build
+          if [ ! -f build/java-runtime/husk-framework.dex ]; then
+            curl -fL --retry 3 -o /tmp/upstream.ipa \
+              https://github.com/Leviidev/Husk/releases/download/2.0/Husk.ipa
+            python3 - <<'PY'
+          import os, zipfile
+          z = zipfile.ZipFile('/tmp/upstream.ipa')
+          for name in z.namelist():
+              if '/java-runtime/' in name or '/android-system/' in name:
+                  rel = name.split('/Husk.app/', 1)[1]
+                  dest = os.path.join('build', rel)
+                  if name.endswith('/'):
+                      os.makedirs(dest, exist_ok=True)
+                  else:
+                      os.makedirs(os.path.dirname(dest), exist_ok=True)
+                      with open(dest, 'wb') as out, z.open(name) as src:
+                          out.write(src.read())
+          PY
+            rm -f /tmp/upstream.ipa
+          fi
+          # font_fallback.xml references these two, and upstream strips them to
+          # save 58 MB -- for a Chinese fork that leaves CJK text as tofu in
+          # Java/Flutter apps, so put them back.
+          mkdir -p build/android-system/fonts
+          [ -f build/android-system/fonts/NotoSansCJK-Regular.ttc ] || \
+            curl -fL --retry 3 -o build/android-system/fonts/NotoSansCJK-Regular.ttc \
+              https://github.com/notofonts/noto-cjk/raw/main/Sans/OTC/NotoSansCJK-Regular.ttc
+          [ -f build/android-system/fonts/NotoSerifCJK-Regular.ttc ] || \
+            curl -fL --retry 3 -o build/android-system/fonts/NotoSerifCJK-Regular.ttc \
+              https://github.com/notofonts/noto-cjk/raw/main/Serif/OTC/NotoSerifCJK-Regular.ttc
+          du -sh build/java-runtime build/android-system
+
+      - name: build
+        run: ./scripts/ci_build.sh "$PWD/build/Husk.ipa"
+
+      - name: upload ipa artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: husk-ipa
+          path: |
+            build/Husk.ipa
+            build/Husk.tipa
+
+      - name: upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build/logs/**/*.log
+            /tmp/husk_ipa/build.log
+          if-no-files-found: ignore
+
+      - name: save build trees
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            third_party
+            build
+            guests
+            src/rppairing-ios/target
+          key: husk-v1-${{ hashFiles('scripts/**', 'patches/**') }}
+
+      # Sideloaders read altsource.json's size to show download progress; keep it
+      # pointing at the real nightly asset. [skip ci] stops the push from re-running us.
+      - name: update altsource.json with real size
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SIZE="$(stat -f%z build/Husk.ipa)"
+          python3 - <<PY
+          import json, datetime
+          with open("altsource.json") as f:
+              src = json.load(f)
+          v = src["apps"][0]["versions"][0]
+          v["size"] = $SIZE
+          v["date"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          with open("altsource.json", "w") as f:
+              json.dump(src, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add altsource.json
+          git diff --cached --quiet || git commit -m "chore: 更新 altsource.json 构建信息 [skip ci]"
+          git push || echo "altsource push failed (non-fatal)"
+
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="简体中文版 Husk。基于上游 2.0（构建 119）汉化，由 GitHub Actions 自动构建。
+          下载 Husk.ipa 用 SideStore / AltStore / TrollStore 安装，或直接下载 Husk.tipa 交给 TrollStore。"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="$GITHUB_REF_NAME"
+            gh release view "$TAG" >/dev/null 2>&1 \
+              || gh release create "$TAG" --title "Husk 中文版 $TAG" --notes "$NOTES"
+            gh release upload "$TAG" build/Husk.ipa build/Husk.tipa --clobber
+          else
+            gh release view nightly >/dev/null 2>&1 \
+              || gh release create nightly --prerelease \
+                   --title "Husk 中文版 Nightly" --notes "$NOTES"
+            gh release upload nightly build/Husk.ipa build/Husk.tipa --clobber
+          fi

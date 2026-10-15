@@ -1,115 +1,67 @@
-# Built-in StikJIT and on-device pairing
+# 内置 StikJIT 与设备端配对
 
-Husk needs an attached debugger to get executable memory on iOS
-([02-jit-substrate.md](02-jit-substrate.md)). That debugger can be the
-StikDebug app, or Husk's own built-in StikJIT helper. Both run the same
-bundled `husk-jit.js` against the running Husk process.
+Husk 需要一个已附加的调试器才能在 iOS 上拿到可执行内存（[02-jit-substrate.md](02-jit-substrate.md)）。这个调试器可以是 StikDebug 应用，也可以是 Husk 自带的内置 StikJIT 助手。两者都会对正在运行的 Husk 进程执行同一份打包的 `husk-jit.js`。
 
-## Choosing a method
+## 选择方式
 
-**Settings › JIT & sideload › Method**:
+**Settings › JIT & sideload › Method**：
 
-- **Automatic** (default): StikDebug when it is installed, then TrollStore,
-  otherwise Built-in StikJIT. Husk does not switch methods after a failure; the
-  error says what to fix.
-- **StikDebug**: the URL-scheme hand-off Husk has always used.
-- **TrollStore**: asks TrollStore to enable JIT (`apple-magnifier://enable-jit`),
-  for a Husk installed through it.
-- **Built-in StikJIT**: no second app. Needs iOS 26, LocalDevVPN, and this
-  iPhone's remote pairing file, which Husk can make itself on iOS 27.
+- **Automatic**（默认）：装了 StikDebug 就用 StikDebug，其次是 TrollStore，否则用内置 StikJIT。失败后 Husk 不会自行切换方式；错误信息会告诉你该修什么。
+- **StikDebug**：Husk 一直使用的 URL scheme 交接方式。
+- **TrollStore**：请求 TrollStore 开启 JIT（`apple-magnifier://enable-jit`），适用于通过 TrollStore 安装的 Husk。
+- **内置 StikJIT**：不需要第二个应用。需要 iOS 26、LocalDevVPN，以及这台 iPhone 的远程配对文件——在 iOS 27 上 Husk 自己就能生成它。
 
-Pairing on the device or importing a pairing file selects Built-in StikJIT.
+在设备上配对或导入配对文件，都会选中内置 StikJIT。
 
-## The walkthrough
+## 引导流程
 
-First-run setup has a **Turn on JIT** page, and **Settings › JIT & sideload ›
-Set up JIT** opens the same walkthrough. Tapping Start without JIT opens it too
-when the chosen method is not set up. It offers three ways in:
+首次运行的设置有一个 **Turn on JIT** 页面，**Settings › JIT & sideload › Set up JIT** 会打开同一个引导流程。在所选方式尚未配置时，点 Start 且当前没有 JIT，也会打开它。它提供三条入口：
 
-1. **Pair on this iPhone** (iOS 27). Tap **Start pairing** and allow Local
-   Network access, open **Settings › Privacy & Security › Developer Mode**,
-   scroll down, tap **Pair with Husk**, and enter the code Husk shows. The code
-   also appears in iOS's background-task banner and as a notification.
-2. **Use a pairing file** made on a computer with the
-   [StikDebug pairing-file guide](https://github.com/StikDebug/StikDebug-Guide/blob/main/pairing_file.md).
-3. **Use StikDebug**, which ends the walkthrough with StikDebug selected.
-4. **Use TrollStore**, likewise, for a Husk installed through TrollStore.
+1. **在这台 iPhone 上配对**（iOS 27）。点 **Start pairing** 并允许本地网络访问，打开 **Settings › Privacy & Security › Developer Mode**，滚动到底部，点 **Pair with Husk**，再输入 Husk 显示的代码。该代码也会出现在 iOS 的后台任务横幅中以及一条通知里。
+2. **使用配对文件**，在电脑上按 [StikDebug pairing-file guide](https://github.com/StikDebug/StikDebug-Guide/blob/main/pairing_file.md) 制作。
+3. **使用 StikDebug**，流程以选中 StikDebug 结束。
+4. **使用 TrollStore**，同样地，适用于通过 TrollStore 安装的 Husk。
 
-The first two continue with the same two steps:
+前两条会继续走相同的两个步骤：
 
-- **Connect LocalDevVPN**. LocalDevVPN returns to Husk through the `husk://`
-  URL scheme once connected.
-- **Check setup**, which checks the VPN and downloads, mounts and verifies the
-  matching Developer Disk Image, then **Enable JIT**.
+- **Connect LocalDevVPN**。连接成功后 LocalDevVPN 通过 `husk://` URL scheme 回到 Husk。
+- **Check setup**，它会检查 VPN，并下载、挂载、校验与之匹配的 Developer Disk Image，然后 **Enable JIT**。
 
-If the device resets the connection it no longer accepts the pairing (each
-on-device pairing replaces the last), so the walkthrough offers **Pair again**.
-If the device cannot be reached it offers LocalDevVPN. After an iOS update,
-**Reset Developer Disk Image** clears stale DDI data.
+如果设备重置了连接，它就不再接受该配对（每次设备端配对都会取代上一次），因此引导流程会提供 **Pair again**。如果联系不到设备，它会提供 LocalDevVPN。一次 iOS 更新之后，**Reset Developer Disk Image** 可以清掉过期的 DDI 数据。
 
-## How it works
+## 它如何工作
 
-### On-device pairing
+### 设备端配对
 
-iOS 27 can pair with a computer it finds on the local network, started from the
-iPhone. Husk plays that computer for its own iPhone:
+iOS 27 可以与它在本地网络上发现的电脑配对，由 iPhone 一侧发起。Husk 为自己的 iPhone 扮演那台电脑：
 
-- `libhusk_rppairing.a` (`src/rppairing-ios`, built by
-  `scripts/build_rppairing_ios.sh`) wraps [idevice](https://github.com/jkcoxson/idevice)'s
-  `PairableHost`. It listens on a TCP port and runs the pairing.
-- `JITPairing.swift` advertises that port as a
-  `_remotepairing-pairable-host._tcp` Bonjour service through mDNSResponder,
-  so only the Local Network permission is needed, not the multicast entitlement.
-- Husk keeps running while the user is in Settings through an iOS 26
-  continued-processing task (`<bundle id>.pairing.session`). If iOS refuses it,
-  typically because a sideloader changed the bundle identifier, Husk only gets
-  the usual ~30 seconds in the background and the walkthrough says so. A pairing
-  that has not finished after five minutes is stopped.
+- `libhusk_rppairing.a`（`src/rppairing-ios`，由 `scripts/build_rppairing_ios.sh` 构建）封装 [idevice](https://github.com/jkcoxson/idevice) 的 `PairableHost`。它监听一个 TCP 端口并执行配对。
+- `JITPairing.swift` 通过 mDNSResponder 把该端口以 `_remotepairing-pairable-host._tcp` Bonjour 服务的形式广播出去，因此只需要"本地网络"权限，不需要 multicast entitlement。
+- 用户停留在 Settings 期间，Husk 靠一个 iOS 26 的持续处理任务（`<bundle id>.pairing.session`）保持运行。如果 iOS 拒绝它——通常是因为某个侧载工具改了 bundle identifier——Husk 在后台只有通常那约 30 秒，引导流程会明说这一点。五分钟仍未完成的配对会被停止。
 
-Every pairing makes a new host key under the same identifier, so the iPhone
-replaces its earlier record for Husk and only the newest pairing file works.
+每一次配对都会在同一个标识符下生成一个新的主机密钥，因此 iPhone 会用它对 Husk 的最新记录替换掉早先的记录，只有最新的那份配对文件才有效。
 
-The pairing file is stored at `Documents/StikJIT/pairingFile.plist`, visible
-through Finder file sharing. It is device-sensitive: Husk sends it only to its
-own helper process.
+配对文件存放在 `Documents/StikJIT/pairingFile.plist`，通过 Finder 的文件共享可见。它对设备敏感：Husk 只把它发送给自己的助手进程。
 
-### The helper
+### 助手
 
-A process cannot synchronously debug itself, so StikJIT runs in
-`HuskJITHelper`, an app extension embedded at
-`Husk.app/PlugIns/HuskJITHelper.appex`. It is a classic app extension on the
-`com.apple.ar.viewer` extension point, never offered anywhere, and Husk starts it
-through `NSExtension` by its bundle identifier, as LiveContainer starts its
-LiveProcess. Husk sends it its PID, the pairing file and `husk-jit.js` as JSON in
-the extension request (`HuskJITMessages.swift`). StikJIT.framework sits in
-`Husk.app/Frameworks`, where the helper loads it from. The helper calls
-StikJIT with `forceScript` and stays attached while the script services trap
-requests. Husk polls `CS_DEBUGGED`, then claims its JIT region exactly as after
-a StikDebug attach, and detaches; that detach is what ends the helper's request.
+一个进程无法同步地调试自己，所以 StikJIT 运行在 `HuskJITHelper` 中，这是一个嵌在 `Husk.app/PlugIns/HuskJITHelper.appex` 里的应用扩展。它是一个位于 `com.apple.ar.viewer` 扩展点上的经典应用扩展，从不在任何地方被展示，Husk 通过 `NSExtension` 按其 bundle 标识符启动它，就像 LiveContainer 启动它的 LiveProcess 那样。Husk 在扩展请求（`HuskJITMessages.swift`）中以 JSON 形式把自己的 PID、配对文件和 `husk-jit.js` 发送给它。StikJIT.framework 位于 `Husk.app/Frameworks`，助手就从那里加载它。助手用 `forceScript` 调用 StikJIT，并在脚本受理陷入请求期间保持附加。Husk 轮询 `CS_DEBUGGED`，随后以与 StikDebug 附加之后完全相同的方式认领自己的 JIT 区域，然后分离；正是那次分离结束了助手的请求。
 
-### Building
+### 构建
 
 ```
 ./scripts/build_rppairing_ios.sh   # needs rustup + `rustup target add aarch64-apple-ios`
 ./scripts/package_ipa.sh
 ```
 
-`ci_build.sh` runs both. `cargo test` in `src/rppairing-ios` runs the pairing
-library's host tests.
+`ci_build.sh` 两个都会跑。在 `src/rppairing-ios` 中运行 `cargo test` 会执行配对库的宿主机测试。
 
-## Signing and installation
+## 签名与安装
 
-The app, `HuskJITHelper` and StikJIT.framework must be signed together, and the
-sideloader must keep app extensions. If it cannot, use StikDebug.
+应用、`HuskJITHelper` 和 StikJIT.framework 必须一起签名，而且侧载工具必须保留应用扩展。如果做不到，就改用 StikDebug。
 
-Sideloaders that sign with the user's own Apple ID (SideStore, AltStore, Plume,
-Impactor) append their team ID to the bundle identifiers. Husk reads the
-helper's identifier from `PlugIns/HuskJITHelper.appex/Info.plist` at run time,
-so that works. An earlier helper was an ExtensionKit extension, found through an
-extension point named after Husk's original identifier; renamed installs failed
-with "Failed to add observer".
+用用户自己的 Apple ID 签名的侧载工具（SideStore、AltStore、Plume、Impactor）会在 bundle 标识符后追加它们的 team ID。Husk 在运行时从 `PlugIns/HuskJITHelper.appex/Info.plist` 读取助手的标识符，所以这样能行。更早的一个助手是 ExtensionKit 扩展，通过一个以 Husk 原始标识符命名的扩展点被找到；改名后的安装会以 "Failed to add observer" 失败。
 
-To build under another bundle identifier, set `HUSK_BUNDLE_IDENTIFIER` in
-`src/app/project.yml`. The app and the helper (`<id>.JITHelper`) follow it.
+要在另一个 bundle 标识符下构建，请在 `src/app/project.yml` 中设置 `HUSK_BUNDLE_IDENTIFIER`。应用和助手（`<id>.JITHelper`）都会跟随它。
 
-Licensing of the bundled pieces is in [01-licensing.md](01-licensing.md).
+打包件的许可情况见 [01-licensing.md](01-licensing.md)。

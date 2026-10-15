@@ -76,8 +76,8 @@ final class MassTest: ObservableObject {
     // MARK: - Starting and stopping
 
     func start() {
-        guard let files = Self.apks(), !files.isEmpty else { status = "Put APKs in the DeveloperTesting folder first."; return }
-        guard !ranThisProcess, husk_native_loaded_apk() == nil else { status = "Close Husk and open it again to start: a game was already loaded in this run."; return }
+        guard let files = Self.apks(), !files.isEmpty else { status = "请先把 APK 放进 DeveloperTesting 文件夹。"; return }
+        guard !ranThisProcess, husk_native_loaded_apk() == nil else { status = "请关闭 Husk 后重新打开再开始：本次运行已经加载过一个游戏。"; return }
         ranThisProcess = true
         state = State(queue: files, index: 0, results: [], appIDs: [:], launched: false, startedAt: Date())
         save()
@@ -96,8 +96,8 @@ final class MassTest: ObservableObject {
     /// A new test of only those.
     func retestFailures() {
         let files = failures
-        guard !files.isEmpty else { status = "No failures to retest."; return }
-        guard !ranThisProcess, husk_native_loaded_apk() == nil else { status = "Close Husk and open it again to start: a game was already loaded in this run."; return }
+        guard !files.isEmpty else { status = "没有需要重测的失败项。"; return }
+        guard !ranThisProcess, husk_native_loaded_apk() == nil else { status = "请关闭 Husk 后重新打开再开始：本次运行已经加载过一个游戏。"; return }
         ranThisProcess = true
         let ids = state?.appIDs ?? [:]
         state = State(queue: files, index: 0, results: [], appIDs: ids, launched: false, startedAt: Date())
@@ -148,7 +148,7 @@ final class MassTest: ObservableObject {
     private func runCurrent() {
         guard var s = state, s.index < s.queue.count else { writeReport(); shareResults = true; return }
         let file = s.queue[s.index]
-        status = "Testing \(s.index + 1) of \(s.queue.count): \(file)"
+        status = "正在测试第 \(s.index + 1) 个，共 \(s.queue.count) 个：\(file)"
         HuskLog.log("masstest", status)
         Task {
             // Taken into the library once; a later launch for the same APK (after a crash) finds it there.
@@ -303,33 +303,33 @@ struct MassTestView: View {
         List {
             Section {
                 if let files {
-                    Text(files.isEmpty ? "The DeveloperTesting folder is empty." : "\(files.count) apps in DeveloperTesting.")
+                    Text(files.isEmpty ? "DeveloperTesting 文件夹是空的。" : "DeveloperTesting 中有 \(files.count) 个应用。")
                 } else {
-                    Text("Make a folder named DeveloperTesting in Husk's folder (Files > On My iPhone > Husk) and put the APKs to test in it: an APK each, or a folder per app with its base and split APKs.")
+                    Text("在 Husk 的文件夹里新建一个名为 DeveloperTesting 的文件夹（文件 > 我的 iPhone > Husk），把要测试的 APK 放进去：每个 APK 一个，或每个应用一个文件夹，里面放它的基础 APK 和分包。")
                         .foregroundStyle(.secondary)
                 }
                 if let s = test.state {
-                    Text(test.active ? "In progress: \(s.results.count) of \(s.queue.count) done." : "Last test: \(s.results.count) of \(s.queue.count) done.")
+                    Text(test.active ? "进行中：已完成 \(s.results.count) 个，共 \(s.queue.count) 个。" : "上次测试：已完成 \(s.results.count) 个，共 \(s.queue.count) 个。")
                 }
                 if !test.status.isEmpty { Text(test.status).font(.caption).foregroundStyle(.secondary) }
             } footer: {
-                Text("Each app is played once JIT is on, watched for 15 seconds, and written down; then Husk closes. Open Husk again for the next one. At the end the results file is offered to share.")
+                Text("每个应用会在 JIT 就绪后运行一次，观察 15 秒并记录结果，然后 Husk 退出。再次打开 Husk 即可测试下一个。全部结束后会提供结果文件供分享。")
             }
             Section {
                 if test.active {
-                    Button("Stop", role: .destructive) { test.stop() }
+                    Button("停止", role: .destructive) { test.stop() }
                 } else {
-                    Button("Start Mass Test") { test.start() }.disabled((files ?? []).isEmpty)
+                    Button("开始批量测试") { test.start() }.disabled((files ?? []).isEmpty)
                     if !test.failures.isEmpty {
-                        Button("Retest \(test.failures.count) Failures") { test.retestFailures() }
+                        Button("重测 \(test.failures.count) 个失败项") { test.retestFailures() }
                     }
                 }
                 if FileManager.default.fileExists(atPath: MassTest.resultsURL.path) {
-                    Button("Share Results") { test.writeReport(); share = true }
+                    Button("分享结果") { test.writeReport(); share = true }
                 }
             }
         }
-        .navigationTitle("Mass Test")
+        .navigationTitle("批量测试")
         .huskForm()
         .sheet(isPresented: $share) { ShareSheet(items: [MassTest.resultsURL]) }
     }

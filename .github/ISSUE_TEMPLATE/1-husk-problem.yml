@@ -1,105 +1,105 @@
-name: Problem with Husk itself
-description: Husk crashes, freezes, won't install, won't turn on JIT, or something in its own screens is wrong.
+name: Husk 本身的问题
+description: Husk 闪退、卡死、无法安装、无法开启 JIT，或它自身的界面显示有问题。
 title: "[Husk] "
 labels: ["bug", "husk"]
 body:
   - type: markdown
     attributes:
       value: |
-        This form is for problems with **Husk itself**. If a particular **game or app** doesn't work, use the "Game or app doesn't work" form instead.
+        本表单用于反馈 **Husk 本身**的问题。如果是某个**游戏或应用**无法运行，请改用「游戏或应用无法运行」表单。
 
-        Issues without logs or the details below will be closed. **Logs are how problems get fixed.**
+        缺少日志或下列细节的 issue 会被关闭。**日志是解决问题的关键。**
   - type: dropdown
     id: area
     attributes:
-      label: What kind of problem is it?
+      label: 这是哪一类问题？
       options:
-        - Husk crashes or closes
-        - Husk freezes or stops responding
-        - Husk won't install
-        - JIT won't turn on
-        - Android (emulated) won't start or download
-        - Something in Husk's own screens is wrong
-        - Other
+        - Husk 闪退或自行关闭
+        - Husk 卡死或无响应
+        - Husk 无法安装
+        - JIT 无法开启
+        - Android（模拟运行）无法启动或无法下载
+        - Husk 自身界面显示异常
+        - 其他
     validations:
       required: true
   - type: textarea
     id: what
     attributes:
-      label: What happened?
-      description: What you did, step by step, what you expected, and what happened instead.
+      label: 发生了什么？
+      description: 你做了什么、一步步的操作、你的预期，以及实际发生了什么。
       placeholder: |
-        1. Opened Husk
-        2. Tapped ...
-        3. Husk closed
+        1. 打开 Husk
+        2. 点按 …
+        3. Husk 退出
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs
+      label: 日志
       description: |
-        **Required.** Attach `husk.log` and `husk-native.log` (drag the files into this box). They are in the **Files** app › **On My iPhone** › **Husk**.
-        If Husk crashed, open it again: it offers a crash report you can share. Settings › About › **Open Console** shows the live log.
-        A screenshot or screen recording helps too.
-      placeholder: Drag husk.log and husk-native.log here.
+        **必填。** 请附上 `husk.log` 和 `husk-native.log`（把文件拖进本框）。它们位于「文件」App ›「我的 iPhone」›「Husk」。
+        如果 Husk 闪退了，请重新打开：它会提供可分享的崩溃报告。「设置」›「关于」› **「打开控制台」** 可查看实时日志。
+        截图或屏幕录制也会有帮助。
+      placeholder: 把 husk.log 和 husk-native.log 拖到这里。
     validations:
       required: true
   - type: input
     id: husk-version
     attributes:
-      label: Husk version
-      description: The top of Settings shows it, for example "Version 1.0.1 · 6bee247". Copy the whole line.
+      label: Husk 版本
+      description: 「设置」页面顶部会显示，例如 "Version 1.0.1 · 6bee247"。请整行复制。
       placeholder: Version 1.0.1 · 6bee247
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Device
+      label: 设备
       placeholder: iPhone 15 Pro
     validations:
       required: true
   - type: input
     id: ios
     attributes:
-      label: iOS version
+      label: iOS 版本
       placeholder: "18.6.2"
     validations:
       required: true
   - type: dropdown
     id: install
     attributes:
-      label: How did you install Husk?
+      label: 你当初是如何安装 Husk 的？
       options:
         - SideStore
         - AltStore
         - TrollStore
         - TrollStore Lite
-        - A paid or enterprise certificate (Esign, Scarlet, Feather, ...)
+        - 付费或企业证书（Esign、Scarlet、Feather 等）
         - Xcode
-        - Other
+        - 其他
     validations:
       required: true
   - type: dropdown
     id: jit
     attributes:
-      label: How do you turn on JIT?
+      label: 你如何开启 JIT？
       options:
         - StikDebug
-        - Built-in StikJIT
+        - 内置 StikJIT
         - TrollStore
-        - Jailbreak (Dopamine or other)
-        - I don't have JIT
-        - Other
+        - 越狱（Dopamine 或其他）
+        - 我没有 JIT
+        - 其他
     validations:
       required: true
   - type: checkboxes
     id: checks
     attributes:
-      label: Before you send it
+      label: 提交前请确认
       options:
-        - label: I am on the newest Husk release.
+        - label: 我使用的已是最新版本的 Husk。
           required: true
-        - label: I searched the existing issues and this one is not already reported.
+        - label: 我已搜索过现有 issue，此问题此前没有被报告过。
           required: true

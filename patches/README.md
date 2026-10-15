@@ -1,38 +1,35 @@
-# Patches
+# 补丁
 
 ## `husk-qemu-ios-jit.patch`
 
-Husk's own. Diverts `tcg/region.c`'s split-W^X allocator to
-`alloc_code_gen_buffer_splitwx_husk_ios()` on iOS, which sources the executable
-half from StikDebug rather than allocating it locally (TXM forbids the latter).
-Applied by `scripts/integrate_husk.sh` along with copying `src/ios-jit/*` into the
-QEMU tree.
+Husk 自己的。在 iOS 上把 `tcg/region.c` 的 split-W^X 分配器重定向到
+`alloc_code_gen_buffer_splitwx_husk_ios()`，其可执行那一半取自 StikDebug 而不是
+本地分配（TXM 禁止后者）。由 `scripts/integrate_husk.sh` 应用，同时把 `src/ios-jit/*`
+复制进 QEMU 源码树。
 
-GPL-2.0-or-later, same as the file it patches.
+GPL-2.0-or-later，与它所打补丁的文件一致。
 
 ## `husk-spirv-cross-zero-init-stride.patch`
 
-Husk's own, against SPIRV-Cross at the revision MoltenVK pins. When a compute shader's
-shared memory has a zero initializer (DXVK's groupshared variables), the MSL backend
-zeroes it in a loop whose stride it wrote as `gl_WorkGroupSize`, which is only declared
-when the shader uses the WorkgroupSize builtin. The Metal compile then failed and the
-pipeline was dropped. The stride now comes from LocalSize / LocalSizeId when there is no
-such builtin. Applied by `scripts/build_moltenvk_ios.sh`.
+Husk 自己的，针对 MoltenVK 锁定的那个 SPIRV-Cross 版本。当一个计算着色器的共享内存
+带有零初始化器（DXVK 的 groupshared 变量）时，MSL 后端会用一个循环把它清零，而它把这个
+循环的步长写成了 `gl_WorkGroupSize`，但该内置变量只有在着色器用到 WorkgroupSize 时才会被
+声明。于是 Metal 编译失败，整条管线被丢弃。当没有该内置变量时，步长现在改由 LocalSize /
+LocalSizeId 提供。由 `scripts/build_moltenvk_ios.sh` 应用。
 
-Apache-2.0, same as the file it patches.
+Apache-2.0，与它所打补丁的文件一致。
 
-## `qemu-10.0.12-utm.patch`, `pixman-0.38.0.patch`, `libslirp-v4.9.1.patch`
+## `qemu-10.0.12-utm.patch`、`pixman-0.38.0.patch`、`libslirp-v4.9.1.patch`
 
-Not ours. Taken verbatim from UTM's `patches/` directory
-(https://github.com/utmapp/UTM), vendored so the build is reproducible without
-cloning UTM.
+不是我们的。逐字取自 UTM 的 `patches/` 目录
+（https://github.com/utmapp/UTM），vendor 进来是为了让构建在不 clone UTM 的情况下
+也可复现。
 
-These are patches against QEMU, pixman and libslirp, so they carry those
-projects' licences rather than UTM's own Apache-2.0 — the QEMU patch is
-GPL-2.0. This distinction matters: UTM's *application* code is Apache-2.0, which
-is incompatible with GPLv2 and must not be copied into Husk. See
-`docs/01-licensing.md`.
+这些是对 QEMU、pixman 和 libslirp 的补丁，因此它们携带的是这些项目的许可证，而不是
+UTM 自己的 Apache-2.0——QEMU 那个补丁是 GPL-2.0。这个区别很重要：UTM 的*应用*代码是
+Apache-2.0，与 GPLv2 不兼容，绝不能复制进 Husk。见
+`docs/01-licensing.md`。
 
-UTM's build script (`scripts/build_dependencies.sh`), which Husk's
-`scripts/build_ios.sh` borrows its toolchain setup from, is ISC-licensed
-(credited to Angelo Haller, 2014) and therefore permissive.
+UTM 的构建脚本（`scripts/build_dependencies.sh`）——Husk 的
+`scripts/build_ios.sh` 借用了它的工具链设置——采用 ISC 许可
+（注明 Angelo Haller, 2014），因而是宽松型许可。

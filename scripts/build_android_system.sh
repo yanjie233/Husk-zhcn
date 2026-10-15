@@ -54,7 +54,8 @@ rm -rf "$OUT"; mkdir -p "$OUT/etc" "$WORK/dump"
 echo "==> fonts"
 "$DEBUGFS" -R "rdump /system/fonts $WORK/dump" "$WORK/system.img" 2>/dev/null || true
 mkdir -p "$OUT/fonts"
-find "$WORK/dump/fonts" -type f ! -name '*CJK*' -size +100c -exec cp {} "$OUT/fonts/" \;
+# zhcn fork: keep the CJK fonts (upstream strips them to save ~58 MB; without them Chinese text is tofu in apps).
+find "$WORK/dump/fonts" -type f -size +100c -exec cp {} "$OUT/fonts/" \;
 for x in fonts.xml font_fallback.xml; do "$DEBUGFS" -R "dump /system/etc/$x $OUT/etc/$x" "$WORK/system.img" 2>/dev/null; done
 
 echo "==> certificates"

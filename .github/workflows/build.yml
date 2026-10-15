@@ -27,9 +27,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The image ships several Xcode versions and simulator runtimes and leaves
-      # only ~14 GB free; a cold build needs far more. Keep the selected Xcode,
-      # drop the rest and the simulators (we only build -sdk iphoneos).
+      # MoltenVK's fetchDependencies runs xcodebuild against "generic:iOS", which
+      # needs an installed iOS platform -- the runner's default Xcode (26.4.1) does
+      # not bundle the iOS 26.5 SDK, and it dies with "iOS 26.5 is not installed".
+      # So pick whichever bundled Xcode has the newest bundled iOS SDK, and export
+      # DEVELOPER_DIR so every later xcodebuild (ANGLE, MoltenVK, the app) agrees.
+      - name: select Xcode with newest iOS SDK
+        run: |
+          best=""; best_v=""
+          for app in /Applications/Xcode*.app; do
+            sdk="$app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs"
+            [ -d "$sdk" ] || continue
+            v="$(ls "$sdk" | grep -oE '[0-9]+\.[0-9]+' | sort -V | tail -1)"
+            echo "$(basename "$app"): iOS SDK $v"
+            if [ -z "$best_v" ] || [ "$(printf '%s\n%s\n' "$best_v" "$v" | sort -V | tail -1)" = "$v" ]; then
+              best="$app"; best_v="$v"
+            fi
+          done
+          if [ -z "$best" ]; then echo "error: no bundled Xcode has an iOS SDK" >&2; exit 1; fi
+          echo "selecting $best (iOS SDK $best_v)"
+          echo "DEVELOPER_DIR=$best/Contents/Developer" >> "$GITHUB_ENV"
+          sudo xcode-select --switch "$best/Contents/Developer"
+
+      # Keep the selected Xcode, drop the other versions and the simulator runtimes
+      # (we only build -sdk iphoneos) -- the image ships several Xcodes and leaves
+      # only ~14 GB free, far too little for a cold build.
       - name: free disk space
         run: |
           KEEP="$(xcode-select -p | sed 's|/Contents/Developer||')"
@@ -39,6 +61,7 @@ jobs:
           done
           sudo rm -rf /Library/Developer/CoreSimulator ~/Library/Developer/CoreSimulator
           xcodebuild -version
+          xcodebuild -showsdks | grep -i iphoneos || true
           df -h /
 
       - name: install build tools

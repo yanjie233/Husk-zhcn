@@ -74,6 +74,19 @@ jobs:
           xcodebuild -showsdks | grep -i iphoneos || true
           df -h /
 
+      # Known runner-image gap (actions/runner-images#13275, #13853): the image can
+      # ship an Xcode whose iOS platform component is missing, and every
+      # xcodebuild with a generic iOS destination then dies with
+      #   "iOS 26.5 is not installed. Please download and install the platform
+      #    from Xcode > Settings > Components."
+      # MoltenVK's fetchDependencies builds against generic/platform=iOS, so install
+      # the platform for the selected Xcode before anything compiles. ~5-15 min and
+      # a few GB; the Xcode cleanup above freed far more than that.
+      - name: install iOS platform component
+        run: |
+          xcodebuild -license accept || true
+          xcodebuild -downloadPlatform iOS
+
       - name: install build tools
         run: |
           brew install xcodegen meson ninja pkg-config qemu

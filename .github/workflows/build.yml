@@ -45,19 +45,29 @@ jobs:
             fi
           done
           if [ -z "$best" ]; then echo "error: no bundled Xcode has an iOS SDK" >&2; exit 1; fi
+          # Resolve symlinks: the image has /Applications/Xcode.app -> Xcode_<ver>.app.
+          # Exporting the symlink path lets the cleanup below delete the real app it
+          # points to, and the next xcodebuild dies with "missing DEVELOPER_DIR path".
+          best="$(cd "$best" && pwd -P)"
           echo "selecting $best (iOS SDK $best_v)"
           echo "DEVELOPER_DIR=$best/Contents/Developer" >> "$GITHUB_ENV"
           sudo xcode-select --switch "$best/Contents/Developer"
+          # The image's /Applications/Xcode.app symlink still points at the default
+          # (older) Xcode. Repoint it at the selected app so any tool that consults
+          # that symlink -- SDK lookups, xcodebuild invocations -- agrees.
+          if [ -L /Applications/Xcode.app ] || [ ! -e /Applications/Xcode.app ]; then
+            sudo ln -sfn "$best" /Applications/Xcode.app
+          fi
 
       # Keep the selected Xcode, drop the other versions and the simulator runtimes
       # (we only build -sdk iphoneos) -- the image ships several Xcodes and leaves
       # only ~14 GB free, far too little for a cold build.
       - name: free disk space
         run: |
-          KEEP="$(xcode-select -p | sed 's|/Contents/Developer||')"
+          KEEP="$(cd "$(xcode-select -p | sed 's|/Contents/Developer||')" && pwd -P)"
           echo "keeping $KEEP"
           for d in /Applications/Xcode*.app; do
-            [ "$d" = "$KEEP" ] || sudo rm -rf "$d"
+            [ "$(cd "$d" 2>/dev/null && pwd -P)" = "$KEEP" ] || sudo rm -rf "$d"
           done
           sudo rm -rf /Library/Developer/CoreSimulator ~/Library/Developer/CoreSimulator
           xcodebuild -version

@@ -104,7 +104,10 @@ final class AppUpdates: ObservableObject {
 
     @Published var available: Release?
 
-    private static let api = URL(string: "https://api.github.com/repos/Leviidev/Husk/releases/latest")!
+    // zhcn fork: check this fork's releases, not upstream's -- an "update" prompt pointing at
+    // Leviidev/Husk would hand the user the English upstream IPA. nightly is a prerelease, so
+    // /releases/latest stays 404 (silent) until a real version tag is cut.
+    private static let api = URL(string: "https://api.github.com/repos/yanjie233/Husk-zhcn/releases/latest")!
     private static let checkedKey = "husk.updates.checked", dismissedKey = "husk.updates.dismissed"
 
     static var current: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0" }

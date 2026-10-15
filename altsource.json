@@ -32,10 +32,10 @@
         {
           "version": "2.0.0",
           "buildVersion": "119",
-          "date": "2026-10-15T15:37:38Z",
+          "date": "2026-10-15T16:24:52Z",
           "localizedDescription": "## Husk 中文版 2.0\r\n基于上游 Husk 2.0（构建 119）的简体中文分叉，由 GitHub Actions 自动构建。\r\n## 本分叉改动\r\n- 界面全面汉化为简体中文\r\n- 文档与 Issue 模板汉化\r\n- Android 系统内置中文字体（Noto CJK）\r\n## 上游说明（Husk 2.0）\r\n圣诞装饰、内置帮助、窗口管理器、全新 UI，150+ 游戏与应用可运行。\r\n上游项目：https://github.com/Leviidev/Husk",
           "downloadURL": "https://github.com/yanjie233/Husk-zhcn/releases/download/nightly/Husk.ipa",
-          "size": 147893190,
+          "size": 147890461,
           "minOSVersion": "16.0"
         }
       ],

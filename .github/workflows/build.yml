@@ -59,9 +59,12 @@ jobs:
             sudo ln -sfn "$best" /Applications/Xcode.app
           fi
 
-      # Keep the selected Xcode, drop the other versions and the simulator runtimes
-      # (we only build -sdk iphoneos) -- the image ships several Xcodes and leaves
-      # only ~14 GB free, far too little for a cold build.
+      # Keep the selected Xcode and drop the other versions (the image ships several
+      # at ~15 GB each; keeping one frees well over 100 GB). Do NOT touch
+      # /Library/Developer/CoreSimulator: that is where installed platform components
+      # register, and deleting it makes xcodebuild report "iOS 26.5 is not installed"
+      # even though the SDK sits inside the .app. We only build -sdk iphoneos, so the
+      # simulator runtimes stay on disk and unused.
       - name: free disk space
         run: |
           KEEP="$(cd "$(xcode-select -p | sed 's|/Contents/Developer||')" && pwd -P)"
@@ -69,7 +72,6 @@ jobs:
           for d in /Applications/Xcode*.app; do
             [ "$(cd "$d" 2>/dev/null && pwd -P)" = "$KEEP" ] || sudo rm -rf "$d"
           done
-          sudo rm -rf /Library/Developer/CoreSimulator ~/Library/Developer/CoreSimulator
           xcodebuild -version
           xcodebuild -showsdks | grep -i iphoneos || true
           df -h /
@@ -80,12 +82,24 @@ jobs:
       #   "iOS 26.5 is not installed. Please download and install the platform
       #    from Xcode > Settings > Components."
       # MoltenVK's fetchDependencies builds against generic/platform=iOS, so install
-      # the platform for the selected Xcode before anything compiles. ~5-15 min and
-      # a few GB; the Xcode cleanup above freed far more than that.
+      # the platform for the selected Xcode before anything compiles (~8.5 GB).
+      # - license accept needs sudo (plain accept fails with "requires admin
+      #   privileges", and installing the platform then dies);
+      # - the multi-GB download has been seen stall at 99% on a transient network
+      #   error, so retry a few times.
       - name: install iOS platform component
         run: |
-          xcodebuild -license accept || true
-          xcodebuild -downloadPlatform iOS
+          sudo --preserve-env=DEVELOPER_DIR xcodebuild -license accept || true
+          for i in 1 2 3; do
+            if xcodebuild -downloadPlatform iOS; then
+              echo "iOS platform installed on attempt $i"
+              exit 0
+            fi
+            echo "downloadPlatform attempt $i failed; retrying in 20s" >&2
+            sleep 20
+          done
+          echo "iOS platform download failed after 3 attempts" >&2
+          exit 1
 
       - name: install build tools
         run: |

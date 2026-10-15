@@ -45,6 +45,23 @@ jobs:
         run: |
           brew install xcodegen meson ninja pkg-config qemu
 
+      # virglrenderer's meson config does `import yaml` through homebrew's own
+      # python3 (the one meson runs on), and hard-errors without it:
+      #   src/gallium/meson.build:72: ERROR: /opt/homebrew/bin/python3 is missing modules: yaml
+      # The runner's brew python ships bare, so install PyYAML into that exact
+      # interpreter -- brew formula first, pip as a fallback (PEP 668 blocks a
+      # plain pip install on brew's python, hence --break-system-packages).
+      - name: install PyYAML for meson
+        run: |
+          PY=/opt/homebrew/bin/python3
+          if ! "$PY" -c 'import yaml' 2>/dev/null; then
+            brew install pyyaml || true
+          fi
+          if ! "$PY" -c 'import yaml' 2>/dev/null; then
+            "$PY" -m pip install --break-system-packages pyyaml
+          fi
+          "$PY" -c 'import yaml; print("pyyaml ok:", yaml.__version__)'
+
       # rppairing needs rustc with the iOS target; the image may or may not
       # ship rustup.
       - name: rust toolchain
